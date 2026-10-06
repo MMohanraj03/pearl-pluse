@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sentry Pulse — Interactive Error Tracking & Telemetry Lab</title>
+  <meta name="description" content="Interactive Web Application demonstrating Sentry SDK integration, runtime error simulation, breadcrumbs, tags, and distributed tracing.">
+
+  <!-- Sentry Official Browser SDK v8 with Tracing -->
+  <script src="https://browser.sentry-cdn.com/8.55.0/bundle.tracing.min.js" crossorigin="anonymous"></script>
+
+  <!-- App Styles -->
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+
+  <!-- Floating Toast Notification -->
+  <div id="sentry-toast" class="sentry-toast">System Ready</div>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-section">
+        <div class="sentry-logo-badge">
+          <!-- Sentry SVG Icon -->
+          <svg class="sentry-logo-svg" viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg">
+            <path d="M38.3 0c-4.4 0-8 3.6-8 8v16.1c0 2.2 1.8 4 4 4s4-1.8 4-4V11.8c8.7 1.8 15.6 8.7 17.4 17.4h-8.3c-2.2 0-4 1.8-4 4s1.8 4 4 4h12.1c0 4.4-3.6 8-8 8H39.4c-2.2 0-4 1.8-4 4s1.8 4 4 4h16.1c8.7-1.8 15.6-8.7 17.4-17.4V26.2c0-4.4-3.6-8-8-8H52.8C51 9.5 44.1 2.6 35.4.8V4.8c0 2.2-1.8 4-4 4s-4-1.8-4-4V0h-3.1C10.8 0 0 10.8 0 24.2v21.6C0 59.2 10.8 70 24.2 70h21.6C59.2 70 70 59.2 70 45.8V24.2C70 10.8 59.2 0 45.8 0H38.3zM24.2 62C15.3 62 8 54.7 8 45.8V24.2C8 15.3 15.3 8 24.2 8h4.1v8.3c-8.7 1.8-15.6 8.7-17.4 17.4h8.3c2.2 0 4-1.8 4-4s-1.8-4-4-4H7.1c0-4.4 3.6-8 8-8h12.1c2.2 0 4-1.8 4-4s-1.8-4-4-4H11.1C12.9 9.5 19.8 2.6 28.5.8v16.1c0 4.4 3.6 8 8 8h16.1c2.2 0 4-1.8 4-4s-1.8-4-4-4H36.6V4.8c4.4 0 8 3.6 8 8v12.1c0 2.2 1.8 4 4 4s4-1.8 4-4V8.8c8.7 1.8 15.6 8.7 17.4 17.4h-8.3c-2.2 0-4 1.8-4 4s1.8 4 4 4h12.1c0 8.9-7.3 16.2-16.2 16.2H24.2z"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Sentry Pulse</h1>
+          <p>Error Tracking & Telemetry Observatory</p>
+        </div>
+      </div>
+
+      <div class="header-telemetry-status">
+        <div class="status-indicator">
+          <span class="status-dot"></span>
+          <span>SDK v8.55 Active</span>
+        </div>
+        <div class="stat-chip" id="stat-events-count">0 Captured</div>
+        <div class="stat-chip">Env: Production</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-container">
+
+    <!-- DSN Configuration Bar -->
+    <section class="dsn-config-banner">
+      <div class="dsn-left">
+        <span class="dsn-icon">🔑</span>
+        <div class="dsn-input-wrapper">
+          <label class="dsn-input-label" for="dsn-input">Sentry DSN (Data Source Name):</label>
+          <input type="text" id="dsn-input" class="dsn-input-field" placeholder="https://publicKey@o0.ingest.sentry.io/projectID">
+        </div>
+      </div>
+      <div class="dsn-actions">
+        <button id="btn-save-dsn" class="btn-primary">Save & Connect</button>
+        <button id="btn-reset-dsn" class="btn-secondary" title="Reset to local inspection mode">Demo Mode</button>
+      </div>
+    </section>
+
+    <!-- Dashboard 2-Column Grid -->
+    <div class="dashboard-grid">
+
+      <!-- Column 1: Error Simulator Lab -->
+      <section class="dash-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon">⚡</span>
+            <h2 class="card-title">Error Simulator Lab</h2>
+          </div>
+          <span class="card-badge">6 Test Vectors</span>
+        </div>
+
+        <p style="font-size: 13.5px; color: var(--text-muted);">
+          Click any vector below to trigger runtime exceptions, unhandled rejections, or custom messages. Sentry intercepts and categorizes each event automatically.
+        </p>
+
+        <div class="actions-grid">
+          <button id="btn-sim-uncaught" class="btn-action danger">
+            <span class="btn-label">💥 Uncaught Crash</span>
+            <span class="btn-subtext">window.onerror TypeError</span>
+          </button>
+
+          <button id="btn-sim-handled" class="btn-action danger">
+            <span class="btn-label">🛑 Handled Exception</span>
+            <span class="btn-subtext">captureException()</span>
+          </button>
+
+          <button id="btn-sim-warning" class="btn-action warning">
+            <span class="btn-label">⚠️ Pool Warning</span>
+            <span class="btn-subtext">captureMessage('warning')</span>
+          </button>
+
+          <button id="btn-sim-fatal" class="btn-action danger">
+            <span class="btn-label">💀 Fatal Outage</span>
+            <span class="btn-subtext">captureMessage('fatal')</span>
+          </button>
+
+          <button id="btn-sim-promise" class="btn-action warning">
+            <span class="btn-label">⏳ Unhandled Promise</span>
+            <span class="btn-subtext">Async Promise.reject()</span>
+          </button>
+
+          <button id="btn-sim-network" class="btn-action cyan">
+            <span class="btn-label">🌐 Network API Error</span>
+            <span class="btn-subtext">HTTP 500 fetch failure</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Column 2: Context, User & Breadcrumbs Lab -->
+      <section class="dash-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon">👤</span>
+            <h2 class="card-title">User & Context Enrichment</h2>
+          </div>
+          <span class="card-badge">Telemetry Tags</span>
+        </div>
+
+        <!-- User Context Form -->
+        <div class="form-row">
+          <div class="input-group">
+            <label class="input-label" for="user-id">User ID:</label>
+            <input type="text" id="user-id" class="input-text" value="usr_8892">
+          </div>
+          <div class="input-group">
+            <label class="input-label" for="user-email">User Email:</label>
+            <input type="email" id="user-email" class="input-text" value="developer@example.com">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="input-group">
+            <label class="input-label" for="user-name">Username:</label>
+            <input type="text" id="user-name" class="input-text" value="sentry_dev">
+          </div>
+          <div class="input-group">
+            <label class="input-label" for="user-role">Role:</label>
+            <input type="text" id="user-role" class="input-text" value="administrator">
+          </div>
+        </div>
+
+        <button id="btn-apply-user" class="btn-secondary" style="align-self: flex-start;">
+          👤 Apply User Context (Sentry.setUser)
+        </button>
+
+        <hr style="border: 0; border-top: 1px solid var(--border-subtle); margin: 6px 0;">
+
+        <!-- Custom Tag Form -->
+        <div class="form-row">
+          <div class="input-group">
+            <label class="input-label" for="tag-key">Custom Tag Key:</label>
+            <input type="text" id="tag-key" class="input-text" value="subscription_tier">
+          </div>
+          <div class="input-group">
+            <label class="input-label" for="tag-val">Custom Tag Value:</label>
+            <input type="text" id="tag-val" class="input-text" value="enterprise">
+          </div>
+        </div>
+
+        <button id="btn-apply-tag" class="btn-secondary" style="align-self: flex-start;">
+          🏷️ Set Tag (Sentry.setTag)
+        </button>
+      </section>
+
+      <!-- Column 3: Breadcrumbs & Tracing Lab -->
+      <section class="dash-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon">🍞</span>
+            <h2 class="card-title">Breadcrumbs & Tracing</h2>
+          </div>
+          <span class="card-badge">APM Spans</span>
+        </div>
+
+        <div class="form-row">
+          <div class="input-group">
+            <label class="input-label" for="bc-category">Breadcrumb Category:</label>
+            <input type="text" id="bc-category" class="input-text" value="ui.click">
+          </div>
+          <div class="input-group">
+            <label class="input-label" for="bc-message">Message:</label>
+            <input type="text" id="bc-message" class="input-text" value="User clicked checkout button">
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <button id="btn-add-breadcrumb" class="btn-secondary">
+            🍞 Add Breadcrumb (Sentry.addBreadcrumb)
+          </button>
+          <button id="btn-run-span" class="btn-action success" style="flex: 1; min-width: 180px;">
+            <span class="btn-label">⏱️ Run Tracing Span</span>
+            <span class="btn-subtext">Sentry.startSpan() transaction</span>
+          </button>
+          <button id="btn-show-feedback" class="btn-action cyan" style="flex: 1; min-width: 180px;">
+            <span class="btn-label">💬 Crash Report Dialog</span>
+            <span class="btn-subtext">showReportDialog()</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Column 4: Live Event Stream Terminal -->
+      <section class="dash-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon">📡</span>
+            <h2 class="card-title">Live Telemetry Stream</h2>
+          </div>
+          <button id="btn-clear-terminal" class="btn-secondary" style="padding: 4px 10px; font-size: 11px;">
+            Clear
+          </button>
+        </div>
+
+        <div class="terminal-window">
+          <div class="terminal-header">
+            <div class="terminal-controls">
+              <span class="terminal-dot dot-red"></span>
+              <span class="terminal-dot dot-yellow"></span>
+              <span class="terminal-dot dot-green"></span>
+            </div>
+            <span class="terminal-title">sentry-pulse-events // stdout</span>
+          </div>
+
+          <div id="terminal-events" class="terminal-body">
+            <!-- Initial welcome log card -->
+            <div class="event-card info">
+              <div class="event-card-header">
+                <span class="event-tag info">INFO</span>
+                <span class="event-time">Ready &bull; ID: init-001</span>
+              </div>
+              <div class="event-message">Sentry Pulse Telemetry Engine Initialized</div>
+              <div class="event-details">
+                Listening for runtime exceptions, handled errors, breadcrumbs, and APM spans. Trigger any action above to inspect live payloads.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Code Integration Snippet Viewer -->
+    <section class="dash-card" style="margin-top: 10px;">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span class="card-icon">📋</span>
+          <h2 class="card-title">Ready-to-Use Integration Snippets</h2>
+        </div>
+        <span class="card-badge">Auto-Generated with your DSN</span>
+      </div>
+
+      <p style="font-size: 13.5px; color: var(--text-muted);">
+        Copy and paste this snippet directly into your project to start capturing errors and performance metrics immediately:
+      </p>
+
+      <div class="code-box-container">
+        <div class="code-tabs">
+          <button class="code-tab active" data-lang="html">HTML / Vanilla JS (CDN)</button>
+          <button class="code-tab" data-lang="react">React / Next.js</button>
+          <button class="code-tab" data-lang="node">Node.js / Express</button>
+          <button class="code-tab" data-lang="python">Python (Flask / Django / FastAPI)</button>
+        </div>
+        <div class="code-content">
+          <button id="btn-copy-snippet" class="btn-copy-code">Copy Code</button>
+          <pre id="snippet-code" class="code-pre"></pre>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- App Script -->
+  <script src="./js/app.js"></script>
+</body>
+</html>
